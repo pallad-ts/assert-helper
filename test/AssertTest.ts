@@ -133,52 +133,52 @@ describe('Assert', () => {
         }
 
 
-        it('simple result', () => {
+        it('simple result', async () => {
             const func = async (x: number) => {
                 return x === ID_EXISTING ? RESULT : undefined;
             };
             const assert = createAssertion(func);
 
-            assertMainFunction(assert);
-            assertMaybe(assert);
-            assertValidation(assert);
+            await assertMainFunction(assert);
+            await assertMaybe(assert);
+            await assertValidation(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
-            assertMainFunction(customAssert, CUSTOM_ERROR);
-            assertMaybe(customAssert);
-            assertValidation(customAssert, CUSTOM_ERROR);
+            await assertMainFunction(customAssert, CUSTOM_ERROR);
+            await assertMaybe(customAssert);
+            await assertValidation(customAssert, CUSTOM_ERROR);
         });
 
-        it('Maybe', () => {
+        it('Maybe', async () => {
             const func = async (x: number) => {
                 return Maybe.fromFalsy(x === ID_EXISTING ? RESULT : undefined)
             };
             const assert = createAssertion(func);
 
-            assertMainFunction(assert);
-            assertMaybe(assert);
-            assertValidation(assert);
+            await assertMainFunction(assert);
+            await assertMaybe(assert);
+            await assertValidation(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
-            assertMainFunction(customAssert, CUSTOM_ERROR);
-            assertMaybe(customAssert);
-            assertValidation(customAssert, CUSTOM_ERROR);
+            await assertMainFunction(customAssert, CUSTOM_ERROR);
+            await assertMaybe(customAssert);
+            await assertValidation(customAssert, CUSTOM_ERROR);
         });
 
-        it('Validation', () => {
+        it('Validation', async () => {
             const func = async (x: number) => {
                 return x === ID_EXISTING ? Validation.Success(RESULT) : Validation.Fail(VALIDATION_ERROR);
             };
             const assert = createAssertion(func);
 
-            assertMainFunction(assert, VALIDATION_ERROR);
-            assertMaybe(assert);
-            assertValidation(assert, VALIDATION_ERROR);
+            await assertMainFunction(assert, VALIDATION_ERROR);
+            await assertMaybe(assert);
+            await assertValidation(assert, VALIDATION_ERROR);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
-            assertMainFunction(customAssert, VALIDATION_ERROR);
-            assertMaybe(customAssert);
-            assertValidation(customAssert, VALIDATION_ERROR);
+            await assertMainFunction(customAssert, VALIDATION_ERROR);
+            await assertMaybe(customAssert);
+            await assertValidation(customAssert, VALIDATION_ERROR);
         });
     });
 });

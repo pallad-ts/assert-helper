@@ -10,6 +10,9 @@
     "lint": "pallad-scripts lint",
     "prepublishOnly": "npm run compiles"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pallad-ts/assert-helper.git"

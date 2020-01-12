@@ -19,6 +19,7 @@ function isMaybe(value: any): value is Maybe<any> {
         return false;
     }
     const result = Maybe.isInstance(value);
+    //tslint:disable-next-line: no-boolean-literal-compare
     return result === true || (result as any) === 'monet.js/Maybe';
 }
 
@@ -27,6 +28,7 @@ function isValidation(value: any): value is Validation<any, any> {
         return false;
     }
     const result = Validation.isInstance(value);
+    //tslint:disable-next-line: no-boolean-literal-compare
     return result === true || (result as any) === 'monet.js/Validation';
 }
 
