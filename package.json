@@ -13,6 +13,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "compiled"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pallad-ts/assert-helper.git"
