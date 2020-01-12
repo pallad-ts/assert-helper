@@ -1,15 +1,15 @@
 import {Maybe, Validation} from "monet";
 import * as is from 'predicates';
 
-export interface Assert<TFunc extends ((...args: any[]) => any), TError = any, TResult = ReturnType<TFunc>> {
-    (...args: Parameters<TFunc>): TResult extends Promise<infer TPromiseResult> ? Promise<NonNullable<TPromiseResult>> : NonNullable<TResult>;
+export interface Assert<TFunc extends ((...args: any[]) => any), TResult = ReturnType<TFunc>, TError = Error> {
+    (...args: Parameters<TFunc>): UnwrapResult<TResult>;
 
     maybe(...args: Parameters<TFunc>): TResult extends Promise<infer TPromiseResult> ? Promise<Maybe<UnwrapMaybe<TPromiseResult>>> : Maybe<UnwrapMaybe<TResult>>;
 
     validation(...args: Parameters<TFunc>): TResult extends Promise<infer TPromiseResult> ? Promise<Validation<TError, TPromiseResult>> : Validation<TError, TResult>;
 }
 
-export function defaultErrorFactory() {
+export function defaultErrorFactory(...args: any[]) {
     return new Error('Assertion failed');
 }
 
@@ -32,10 +32,10 @@ function isValidation(value: any): value is Validation<any, any> {
     return result === true || (result as any) === 'monet.js/Validation';
 }
 
-export function createAssertion<TResult, TFunc extends ((...args: any[]) => TResult), TError = any>(
+export function createAssertion<TFunc extends ((...args: any[]) => TResult), TResult>(
     func: TFunc,
-    errorFactory?: (...args: Parameters<TFunc>) => TError
-): Assert<TFunc, TError, TResult> {
+    errorFactory?: (...args: Parameters<TFunc>) => UnwrapError<UnwrapResult<TResult>, Error>
+) {
     const result = function (...args: Parameters<TFunc>) {
         return onOptionalPromise(result.validation(...args), (x: Validation<any, any>) => {
             return x.catchMap(e => {
@@ -43,7 +43,7 @@ export function createAssertion<TResult, TFunc extends ((...args: any[]) => TRes
             })
                 .success()
         })
-    } as any as Assert<TFunc, TError, TResult>;
+    } as any as Assert<TFunc, UnwrapResult<TFunc>, UnwrapError<UnwrapResult<TFunc>, Error>>;
 
     result.maybe = function (...args: Parameters<TFunc>) {
         return onOptionalPromise(func(...args), (x: any) => {
@@ -83,4 +83,14 @@ function onOptionalPromise(result: any, func: (value: any) => any) {
     return func(result);
 }
 
-export type UnwrapMaybe<T> = T extends Maybe<infer TResult> ? TResult : T;
+export type UnwrapMaybe<T> = T extends Maybe<infer TResult> ? TResult : never;
+export type UnwrapErrorFromValidation<T, TProvidedError> = T extends Validation<infer TError, any> ? TError : TProvidedError;
+
+export type UnwrapResultFromMonads<T> = T extends Maybe<infer TResult> ? TResult : never
+    | T extends Validation<any, infer TResult> ? TResult : never
+    | T
+
+export type UnwrapResult<TResult> = TResult extends Promise<infer TPromiseResult> ?
+    Promise<UnwrapResultFromMonads<TPromiseResult>> : UnwrapResultFromMonads<TResult>
+export type UnwrapError<TResult, TError = Error> = TResult extends Promise<infer TInferResult> ?
+    UnwrapErrorFromValidation<TInferResult, TError> : UnwrapErrorFromValidation<TResult, TError>;
