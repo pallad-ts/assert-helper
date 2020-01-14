@@ -43,7 +43,7 @@ export function createAssertion<TFunc extends ((...args: any[]) => TResult), TRe
             })
                 .success()
         })
-    } as any as Assert<TFunc, UnwrapResult<TFunc>, UnwrapError<UnwrapResult<TFunc>, Error>>;
+    } as any as Assert<TFunc, UnwrapResult<ReturnType<TFunc>>, UnwrapError<UnwrapResult<ReturnType<TFunc>>, Error>>;
 
     result.maybe = function (...args: Parameters<TFunc>) {
         return onOptionalPromise(func(...args), (x: any) => {
