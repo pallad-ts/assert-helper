@@ -1,6 +1,6 @@
 import {assert, IsExact} from 'conditional-type-checks';
 import {Unwrap} from "@src/Unwrap";
-import {Maybe} from "monet";
+import {Maybe} from "@sweet-monads/maybe";
 
 describe('Unwrap', () => {
     interface Foo {

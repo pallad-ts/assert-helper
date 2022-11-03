@@ -1,6 +1,7 @@
 import {Assert, createAssertion} from "@src/Assert";
-import {Maybe, Validation} from "monet";
 import {assert as TypeAssert, IsExact} from 'conditional-type-checks';
+import {fromNullable, just, Maybe, none} from "@sweet-monads/maybe";
+import {Either, left, right} from "@sweet-monads/either";
 
 describe('Assert', () => {
 
@@ -40,18 +41,18 @@ describe('Assert', () => {
 
         function assertMaybe(assert: Assert<any, any, any>) {
             expect(assert.maybe(ID_EXISTING))
-                .toEqual(Maybe.Some(RESULT));
+                .toEqual(just(RESULT));
 
             expect(assert.maybe(ID_NOT_EXISTING))
-                .toEqual(Maybe.None());
+                .toEqual(none());
         }
 
-        function assertValidation(assert: Assert<any, any, any>, error?: Error) {
-            expect(assert.validation(ID_EXISTING))
-                .toEqual(Validation.Success(RESULT));
+        function assertEither(assert: Assert<any, any, any>, error?: Error) {
+            expect(assert.either(ID_EXISTING))
+                .toEqual(right(RESULT));
 
-            const failResult = assert.validation(ID_NOT_EXISTING) as Validation<any, any>;
-            expect(failResult.fail())
+            const failResult = assert.either(ID_NOT_EXISTING) as Either<any, any>;
+            expect(failResult.value)
                 .toHaveProperty('message', error ? error.message : DEFAULT_ERROR_MESSAGE);
         }
 
@@ -64,12 +65,12 @@ describe('Assert', () => {
 
             assertMainFunction(assert);
             assertMaybe(assert);
-            assertValidation(assert);
+            assertEither(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             assertMainFunction(customAssert, CUSTOM_ERROR);
             assertMaybe(customAssert);
-            assertValidation(customAssert, CUSTOM_ERROR);
+            assertEither(customAssert, CUSTOM_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -77,8 +78,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Validation<Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Either<Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -86,24 +87,24 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Validation<CustomError | Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Either<CustomError | Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
 
         it('Maybe', () => {
             const func = (x: number) => {
-                return Maybe.fromFalsy<ResultType>(x === ID_EXISTING ? RESULT : undefined)
+                return fromNullable<ResultType | undefined>(x === ID_EXISTING ? RESULT : undefined)
             };
             const assert = createAssertion(func);
 
             assertMainFunction(assert);
             assertMaybe(assert);
-            assertValidation(assert);
+            assertEither(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             assertMainFunction(customAssert, CUSTOM_ERROR);
             assertMaybe(customAssert);
-            assertValidation(customAssert, CUSTOM_ERROR);
+            assertEither(customAssert, CUSTOM_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -111,8 +112,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Validation<Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Either<Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -120,24 +121,24 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Validation<CustomError | Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Either<CustomError | Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
 
-        it('Validation', () => {
-            const func = (x: number): Validation<Error, ResultType> => {
-                return x === ID_EXISTING ? Validation.Success(RESULT) : Validation.Fail(VALIDATION_ERROR);
+        it('Either', () => {
+            const func = (x: number): Either<Error, ResultType> => {
+                return x === ID_EXISTING ? right(RESULT) : left(VALIDATION_ERROR);
             };
             const assert = createAssertion(func);
 
             assertMainFunction(assert, VALIDATION_ERROR);
             assertMaybe(assert);
-            assertValidation(assert, VALIDATION_ERROR);
+            assertEither(assert, VALIDATION_ERROR);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             assertMainFunction(customAssert, VALIDATION_ERROR);
             assertMaybe(customAssert);
-            assertValidation(customAssert, VALIDATION_ERROR);
+            assertEither(customAssert, VALIDATION_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -145,8 +146,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Validation<Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Either<Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, ResultType>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -154,8 +155,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Maybe<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Validation<CustomError | Error, ResultType>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Either<CustomError | Error, ResultType>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
     });
 
@@ -173,20 +174,20 @@ describe('Assert', () => {
         async function assertMaybe(assert: Assert<any, any, any>) {
             await expect(assert.maybe(ID_EXISTING))
                 .resolves
-                .toEqual(Maybe.Some(RESULT));
+                .toEqual(just(RESULT));
 
             await expect(assert.maybe(ID_NOT_EXISTING))
                 .resolves
-                .toEqual(Maybe.None());
+                .toEqual(none());
         }
 
-        async function assertValidation(assert: Assert<any, any, any>, error?: Error) {
-            await expect(assert.validation(ID_EXISTING))
+        async function assertEither(assert: Assert<any, any, any>, error?: Error) {
+            await expect(assert.either(ID_EXISTING))
                 .resolves
-                .toEqual(Validation.Success(RESULT));
+                .toEqual(right(RESULT));
 
-            const failResult = await assert.validation(ID_NOT_EXISTING) as Validation<any, any>;
-            expect(failResult.fail())
+            const failResult = await assert.either(ID_NOT_EXISTING) as Either<any, any>;
+            expect(failResult.value)
                 .toHaveProperty('message', error ? error.message : DEFAULT_ERROR_MESSAGE);
         }
 
@@ -199,12 +200,12 @@ describe('Assert', () => {
 
             await assertMainFunction(assert);
             await assertMaybe(assert);
-            await assertValidation(assert);
+            await assertEither(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             await assertMainFunction(customAssert, CUSTOM_ERROR);
             await assertMaybe(customAssert);
-            await assertValidation(customAssert, CUSTOM_ERROR);
+            await assertEither(customAssert, CUSTOM_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -212,8 +213,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Promise<Validation<Error, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Promise<Either<Error, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -221,24 +222,24 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Promise<Validation<CustomError | Error, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Promise<Either<CustomError | Error, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
 
         it('Maybe', async () => {
             const func = async (x: number) => {
-                return Maybe.fromFalsy(x === ID_EXISTING ? RESULT : undefined)
+                return fromNullable(x === ID_EXISTING ? RESULT : undefined)
             };
             const assert = createAssertion(func);
 
             await assertMainFunction(assert);
             await assertMaybe(assert);
-            await assertValidation(assert);
+            await assertEither(assert);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             await assertMainFunction(customAssert, CUSTOM_ERROR);
             await assertMaybe(customAssert);
-            await assertValidation(customAssert, CUSTOM_ERROR);
+            await assertEither(customAssert, CUSTOM_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -246,8 +247,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Promise<Validation<Error, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Promise<Either<Error, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -255,24 +256,24 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Promise<Validation<CustomError | Error, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Promise<Either<CustomError | Error, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
 
-        it('Validation', async () => {
-            const func = async (x: number): Promise<Validation<CustomError, ResultType>> => {
-                return x === ID_EXISTING ? Validation.Success(RESULT) : Validation.Fail(VALIDATION_ERROR);
+        it('Either', async () => {
+            const func = async (x: number): Promise<Either<CustomError, ResultType>> => {
+                return x === ID_EXISTING ? right(RESULT) : left(VALIDATION_ERROR);
             };
             const assert = createAssertion(func);
 
             await assertMainFunction(assert, VALIDATION_ERROR);
             await assertMaybe(assert);
-            await assertValidation(assert, VALIDATION_ERROR);
+            await assertEither(assert, VALIDATION_ERROR);
 
             const customAssert = createAssertion(func, ERROR_FACTORY);
             await assertMainFunction(customAssert, VALIDATION_ERROR);
             await assertMaybe(customAssert);
-            await assertValidation(customAssert, VALIDATION_ERROR);
+            await assertEither(customAssert, VALIDATION_ERROR);
 
             TypeAssert<IsExact<ReturnType<typeof assert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert>, [number]>>(true);
@@ -280,8 +281,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof assert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof assert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof assert.validation>, Promise<Validation<Error, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof assert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof assert.either>, Promise<Either<Error, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof assert.either>, [number]>>(true);
 
             TypeAssert<IsExact<ReturnType<typeof customAssert>, Promise<ResultType>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert>, [number]>>(true);
@@ -289,8 +290,8 @@ describe('Assert', () => {
             TypeAssert<IsExact<ReturnType<typeof customAssert.maybe>, Promise<Maybe<ResultType>>>>(true);
             TypeAssert<IsExact<Parameters<typeof customAssert.maybe>, [number]>>(true);
 
-            TypeAssert<IsExact<ReturnType<typeof customAssert.validation>, Promise<Validation<CustomError, ResultType>>>>(true);
-            TypeAssert<IsExact<Parameters<typeof customAssert.validation>, [number]>>(true);
+            TypeAssert<IsExact<ReturnType<typeof customAssert.either>, Promise<Either<CustomError, ResultType>>>>(true);
+            TypeAssert<IsExact<Parameters<typeof customAssert.either>, [number]>>(true);
         });
     });
 });
