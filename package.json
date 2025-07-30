@@ -5,9 +5,9 @@
   "main": "compiled/index.js",
   "types": "compiled/index.d.ts",
   "scripts": {
-    "test": "pallad-scripts test",
+    "test": "jest --passWithNoTests",
     "compile": "pallad-scripts compile",
-    "lint": "pallad-scripts lint",
+    "lint": "eslint src/**/*.ts",
     "prepublishOnly": "npm run compile"
   },
   "publishConfig": {
@@ -33,9 +33,12 @@
     "tslib": "^2"
   },
   "devDependencies": {
-    "@pallad/scripts": "^3",
+    "@pallad/scripts": "^4",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@types/node": "^22",
     "@types/sinon": "^10",
     "conditional-type-checks": "^1.0.5",
+    "prettier": "^3.6.2",
     "sinon": "^14"
   }
 }
